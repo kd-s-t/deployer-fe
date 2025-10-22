@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { theme } from './theme';
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Deployer App",
-  description: "A modern deployment application with React Flow and MUI5",
+  description: "A modern deployment application",
 };
 
 export default function RootLayout({
@@ -17,10 +15,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        {children}
+        <Toaster position="top-right" richColors />
       </body>
     </html>
   );

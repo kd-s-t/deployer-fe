@@ -1,4 +1,6 @@
 /* Global styles for MUI5 */
+@import '@xyflow/react/dist/style.css';
+
 html, body {
   margin: 0;
   padding: 0;
