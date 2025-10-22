@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '../../lib/config';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export default function DashboardPage() {
       setUser(JSON.parse(userData));
     } catch (error) {
       console.error('Error parsing user data:', error);
+      // Clear invalid data and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       router.push('/login');
     } finally {
       setLoading(false);
@@ -32,6 +36,67 @@ export default function DashboardPage() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     router.push('/');
+  };
+
+  const handleNewDeployment = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Check if we have valid authentication data
+      if (!token) {
+        console.error('No authentication token found');
+        router.push('/login');
+        return;
+      }
+      
+      if (!userData.id) {
+        console.error('No user ID found in user data:', userData);
+        router.push('/login');
+        return;
+      }
+      
+      console.log('Creating deployment with user ID:', userData.id);
+      console.log('Token:', token ? 'Present' : 'Missing');
+      console.log('Token preview:', token ? token.substring(0, 20) + '...' : 'None');
+      console.log('User data:', userData);
+      
+      // Create a new draft deployment
+      const response = await fetch(getApiUrl('/deployment'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${token}` // Temporarily disabled
+        },
+        body: JSON.stringify({
+          name: `New Deployment ${new Date().toLocaleDateString()}`,
+          description: 'Draft deployment - ready to configure',
+          status: 'draft',
+          nodes: [],
+          connections: []
+        })
+      });
+
+      if (response.ok) {
+        const newDeployment = await response.json();
+        console.log('Successfully created deployment:', newDeployment);
+        // Navigate to deployment page with the new deployment ID
+        router.push(`/deployment/${newDeployment.id}`);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to create new deployment:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        // Show error message instead of redirecting
+        alert('Failed to create deployment. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating new deployment:', error);
+      // Show error message instead of redirecting
+      alert('Error creating deployment. Please try again.');
+    }
   };
 
   if (loading) {
@@ -126,7 +191,7 @@ export default function DashboardPage() {
               gap: '1rem'
             }}>
               <button 
-                onClick={() => router.push('/deployment')}
+                onClick={handleNewDeployment}
                 style={{
                   padding: '1.5rem',
                   backgroundColor: '#28a745',

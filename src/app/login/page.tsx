@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '../../lib/config';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,13 +11,29 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const clearStorage = () => {
+    const oldToken = localStorage.getItem('token');
+    const oldUser = localStorage.getItem('user');
+    
+    console.log('Before clearing - Token:', oldToken ? 'Present' : 'Missing');
+    console.log('Before clearing - User:', oldUser ? 'Present' : 'Missing');
+    
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    console.log('After clearing - Token:', localStorage.getItem('token') ? 'Still present!' : 'Cleared');
+    console.log('After clearing - User:', localStorage.getItem('user') ? 'Still present!' : 'Cleared');
+    
+    setMessage('✅ Storage cleared! You can now log in with fresh credentials.');
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
     try {
-      const response = await fetch('http://localhost:3011/auth/login', {
+      const response = await fetch(getApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -37,6 +54,9 @@ export default function LoginPage() {
         }, 1000);
       } else {
         setMessage(`❌ Login failed: ${data.message || 'Invalid credentials'}`);
+        // Clear any existing invalid tokens
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
     } catch (error) {
       setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Network error'}`);
@@ -110,12 +130,29 @@ export default function LoginPage() {
             border: 'none',
             borderRadius: '4px',
             fontSize: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer'
+            cursor: loading ? 'not-allowed' : 'pointer',
+            marginBottom: '1rem'
           }}
         >
           {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
+
+      <button
+        onClick={clearStorage}
+        style={{
+          width: '100%',
+          padding: '0.5rem',
+          backgroundColor: '#dc3545',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          fontSize: '0.9rem',
+          cursor: 'pointer'
+        }}
+      >
+        🗑️ Clear Storage (Fix JWT Error)
+      </button>
 
       {message && (
         <div style={{ 

@@ -7,6 +7,7 @@ interface PropertiesPanelProps {
   nodes: Node[];
   deploymentFlow: DeploymentFlow;
   onPropertyChange: (property: string, value: unknown) => void;
+  onClose: () => void;
 }
 
 export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
@@ -14,6 +15,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   nodes,
   deploymentFlow,
   onPropertyChange,
+  onClose,
 }) => {
   if (!selectedNode) return null;
 
@@ -21,19 +23,78 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   if (!node) return null;
 
   const card = menuCards.find(c => c.type === node.type);
+  
+  // Get the appropriate label for the dropdown based on node type
+  const getDropdownLabel = (nodeType: string) => {
+    switch (nodeType) {
+      case 'repository': return 'Platform';
+      case 'cicd': return 'Service';
+      case 'server': return 'Provider';
+      default: return 'Framework';
+    }
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div style={{
-      width: '300px',
-      backgroundColor: 'white',
-      borderRadius: '0',
-      boxShadow: 'none',
-      padding: '1.5rem',
-      height: 'fit-content'
-    }}>
-      <h3 style={{ color: '#333', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-        {card?.icon} {node.label} Properties
-      </h3>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+        padding: '2rem',
+        width: '500px',
+        maxHeight: '80vh',
+        overflowY: 'auto',
+        position: 'relative'
+      }}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'none',
+            border: 'none',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            color: '#666',
+            padding: '0.25rem',
+            borderRadius: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '32px',
+            height: '32px'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f5f5f5'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          ×
+        </button>
+
+        <h3 style={{ color: '#333', marginBottom: '1.5rem', fontSize: '1.1rem', paddingRight: '2rem' }}>
+          {card?.icon} {node.label} Properties
+        </h3>
       
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {/* Framework Selection */}
@@ -44,7 +105,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             fontWeight: '500',
             color: '#333'
           }}>
-            Framework
+            {getDropdownLabel(node.type)}
           </label>
           <select
             value={deploymentFlow.nodeProperties[node.id]?.framework || ''}
@@ -59,7 +120,12 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
           >
             <option value="">Select framework</option>
             {componentFrameworks[node.type as keyof typeof componentFrameworks]?.map(framework => (
-              <option key={framework.value} value={framework.value}>
+              <option 
+                key={framework.value} 
+                value={framework.value}
+                disabled={(framework as any).disabled}
+                style={(framework as any).disabled ? { color: '#999', fontStyle: 'italic' } : {}}
+              >
                 {framework.label}
               </option>
             ))}
@@ -265,6 +331,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             }}
           />
         </div>
+      </div>
       </div>
     </div>
   );
